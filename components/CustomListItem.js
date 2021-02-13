@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from 'react'
 import { StyleSheet } from 'react-native'
-import { ListItem } from 'react-native-elements'
+import { ListItem, Text } from 'react-native-elements'
 
-const CustomListItem = ({id, title, slug, excerpt, enterBlog}) => {
+const CustomListItem = ({id, title, slug, excerpt, enterBlog, featured}) => {
     
     const [chatMessages, setChatMessages] = useState([]);
 
@@ -11,9 +11,12 @@ const CustomListItem = ({id, title, slug, excerpt, enterBlog}) => {
         <ListItem 
             key={id} 
             onPress={() => enterBlog(id, slug, title)} key={id} bottomDivider
+            containerStyle={featured&&{ backgroundColor: '#d2e0f7' }}
         >
 
-            <ListItem.Content>
+            <ListItem.Content 
+            >
+                {featured&&<Text>Featured</Text>}
                 <ListItem.Title
                     style={{ fontWeight: "bold" }}>
                     {title}

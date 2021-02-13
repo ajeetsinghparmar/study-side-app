@@ -1,9 +1,19 @@
 import axios from 'axios';
-import React, { useEffect, useLayoutEffect, useState } from 'react'
-import { TouchableOpacity } from 'react-native';
+import React, { useEffect, useLayoutEffect, useState, useRef } from 'react'
+import { ActivityIndicator, TouchableOpacity } from 'react-native';
 import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native'
 import CustomListItem from '../components/CustomListItem';
 import { Entypo } from '@expo/vector-icons'
+import * as Notifications from 'expo-notifications';
+import {registerForPushNotificationsAsync, sendPushNotification} from '../Notification'
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+  }),
+});
 
 
 const HomeScreen = ({ navigation }) => {
@@ -11,6 +21,31 @@ const HomeScreen = ({ navigation }) => {
     const [featuredBlog, setFeaturedBlog] = useState([]);
     const [floading, setFloading] = useState(false);
     const [bloading, setBloading] = useState(false)
+
+      const [expoPushToken, setExpoPushToken] = useState('');
+      const [notification, setNotification] = useState(false);
+      const notificationListener = useRef();
+      const responseListener = useRef();
+
+      useEffect(() => {
+        registerForPushNotificationsAsync().then(token => setExpoPushToken(token));
+
+        // This listener is fired whenever a notification is received while the app is foregrounded
+        notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+          setNotification(notification);
+        });
+
+        // This listener is fired whenever a user taps on or interacts with a notification (works when app is foregrounded, backgrounded, or killed)
+        responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+          console.log(response);
+        });
+
+        return () => {
+          Notifications.removeNotificationSubscription(notificationListener);
+          Notifications.removeNotificationSubscription(responseListener);
+        };
+      }, []);
+
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -27,7 +62,10 @@ const HomeScreen = ({ navigation }) => {
                         marginRight: 20,
                     }}
                 >
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={async () => {
+
+                        await sendPushNotification(expoPushToken, "Notification", "Menu Functionality is being developed" );
+                    }} >
                     <Entypo name="dots-three-vertical" size={24} color="white" />
                     </TouchableOpacity>
                 </View>
@@ -79,6 +117,19 @@ const HomeScreen = ({ navigation }) => {
 
     return (
     <SafeAreaView>
+        <View>
+            <CustomListItem
+                key={featuredBlog.key}
+                id={featuredBlog.id}
+                title={featuredBlog.title}
+                slug={featuredBlog.slug}
+                excerpt={featuredBlog.excerpt}
+                enterBlog={enterBlog}
+                featured
+            />
+        </View>
+        {bloading? <ActivityIndicator size="large" color="#000" />
+        :
     <ScrollView style={styles.container}>
         {blogs.map(({id, title, slug, excerpt}) => (
             <CustomListItem 
@@ -90,7 +141,7 @@ const HomeScreen = ({ navigation }) => {
                 enterBlog={enterBlog}
             />                
         ))}
-    </ScrollView>
+    </ScrollView>}
 </SafeAreaView>
     )
 }

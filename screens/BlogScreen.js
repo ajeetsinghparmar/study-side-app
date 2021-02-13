@@ -1,6 +1,6 @@
 import axios from 'axios';
 import React, { useEffect, useLayoutEffect, useState } from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, StyleSheet, Text, View, StatusBar } from 'react-native'
 import { WebView } from 'react-native-webview'
 import { AntDesign, Entypo } from '@expo/vector-icons'
 import { TouchableOpacity } from 'react-native';
@@ -9,6 +9,7 @@ import { TouchableOpacity } from 'react-native';
 
 const BlogScreen = ({ navigation, route }) => {
     const [blog, setBlog] = useState({});
+    const [loading, setLoading] = useState(false)
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -58,25 +59,26 @@ const BlogScreen = ({ navigation, route }) => {
         const slug = route.params.slug;
 
         const fetchData = async () => {
+            setLoading(true)
             try {
                 const res = await axios.get(`https://studyside.herokuapp.com/api/blog/${slug}`)
                 setBlog(res.data);
             } catch (error) {
                 alert(error)
             }
+            setLoading(false)
         };
         fetchData();
     }, [route.params.slug]);
 
 
-    const capitalizeFirstLetter = (word) => {
-        if (word)
-            return word.charAt(0).toUpperCase() + word.slice(1);
-        return '';
-    };
 
     return (
     <>
+        <StatusBar hidden={true} />
+        {
+            loading? <ActivityIndicator size="large" color="#000" />
+                :
             <WebView
                 originWhitelist={['*']}
             source={{
@@ -89,12 +91,13 @@ const BlogScreen = ({ navigation, route }) => {
                     <title></title>
                 </head>
                 <body>
-                    ${blog.content || "Loading..."}
+                    ${blog?.content }
                 </body>
                 </html>`
             }}
             style={{marginTop: 20, fontSize: 80}}
             />
+        }
             </>
     )
 }
